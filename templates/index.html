@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QuickLines</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 600px;
+      margin: 60px auto;
+      padding: 0 20px;
+      background: #111;
+      color: #eee;
+    }
+    #quote-box {
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 24px;
+      min-height: 100px;
+    }
+    #quote-text {
+      font-size: 1.4em;
+      margin: 0 0 12px;
+    }
+    #quote-author {
+      color: #888;
+      text-align: right;
+    }
+    button {
+      margin-top: 16px;
+      padding: 10px 16px;
+      font-size: 1em;
+      cursor: pointer;
+      border-radius: 6px;
+      border: none;
+      background: #4f8cff;
+      color: white;
+    }
+    button:disabled {
+      background: #555;
+      cursor: wait;
+    }
+    #fact-box {
+      margin-top: 32px;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 20px 24px;
+    }
+    #fact-label {
+      margin: 0 0 8px;
+      font-size: 0.8em;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #888;
+    }
+    #fact-text {
+      margin: 0;
+      font-size: 1.05em;
+    }
+    h2 {
+      margin-top: 40px;
+      font-size: 1em;
+      color: #888;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      padding: 8px 0;
+      border-bottom: 1px solid #222;
+      font-size: 0.9em;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>Random Quote</h1>
+  <div id="quote-box">
+    <p id="quote-text">Click the button to fetch a quote.</p>
+    <p id="quote-author"></p>
+  </div>
+  <button id="fetch-btn">New Quote</button>
+
+  <div id="fact-box">
+    <p id="fact-label">Random Fact</p>
+    <p id="fact-text">Click the button to fetch a fact.</p>
+  </div>
+  <button id="fact-btn">New Fact</button>
+
+  <h2>History</h2>
+  <ul id="history-list">
+    {% for item in history %}
+    <li>"{{ item.quote }}" — {{ item.author }}</li>
+    {% endfor %}
+  </ul>
+
+  <script>
+    const btn = document.getElementById("fetch-btn");
+    const text = document.getElementById("quote-text");
+    const author = document.getElementById("quote-author");
+    const historyList = document.getElementById("history-list");
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      btn.textContent = "Loading...";
+      try {
+        const res = await fetch("/api/quote");
+        const data = await res.json();
+        text.textContent = `"${data.quote}"`;
+        author.textContent = `— ${data.author}`;
+
+        const li = document.createElement("li");
+        li.textContent = `"${data.quote}" — ${data.author}`;
+        historyList.prepend(li);
+      } catch (err) {
+        text.textContent = "Failed to fetch quote.";
+        author.textContent = "";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "New Quote";
+      }
+    });
+
+    const factBtn = document.getElementById("fact-btn");
+    const factText = document.getElementById("fact-text");
+
+    async function loadFact() {
+      factBtn.disabled = true;
+      factBtn.textContent = "Loading...";
+      try {
+        const res = await fetch("/api/fact");
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        factText.textContent = data.fact;
+      } catch (err) {
+        factText.textContent = "Failed to fetch fact.";
+      } finally {
+        factBtn.disabled = false;
+        factBtn.textContent = "New Fact";
+      }
+    }
+
+    factBtn.addEventListener("click", loadFact);
+    loadFact();
+  </script>
+</body>
+</html>
